@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Accessibility Analyser</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+      background: #f5f7fa;
+      color: #333;
+    }
+
+    /* Header */
+    header {
+      background: linear-gradient(135deg, #2d5f8d 0%, #1e4a6f 100%);
+      color: white;
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 500;
+    }
+
+    .download-btn {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.3s;
+    }
+
+    .download-btn:hover {
+      background: #2980b9;
+    }
+
+    /* Summary Section */
+    .summary-header {
+      background: white;
+      padding: 20px 40px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .summary-header h2 {
+      font-size: 1.1rem;
+      color: #555;
+      margin-bottom: 5px;
+    }
+
+    .url-info span {
+      font-weight: 600;
+      color: #e74c3c;
+    }
+
+    /* Summary Cards - Passed/Failed/Total */
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      padding: 30px 40px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .summary-card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      border-top: 5px solid;
+      text-align: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .summary-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+
+    .summary-card.passed { border-top-color: #27ae60; }
+    .summary-card.failed { border-top-color: #e74c3c; }
+    .summary-card.total { border-top-color: #f1c40f; }
+
+    .summary-card h3 {
+      font-size: 2.5rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .summary-card p {
+      color: #666;
+      font-size: 1rem;
+    }
+
+    /* Main Content */
+    .main-content {
+      padding: 20px 40px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    /* Filters */
+    .filters {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+    }
+
+    .filter-group {
+      margin-bottom: 15px;
+    }
+
+    .filter-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #555;
+    }
+
+    .filter-group select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 0.95rem;
+    }
+
+    /* Chart Container */
+    .chart-container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .chart-container h3 {
+      margin-bottom: 20px;
+      color: #555;
+    }
+
+    #statusChart {
+      max-width: 300px;
+      max-height: 300px;
+    }
+
+    .legend {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+    }
+
+    .legend-color {
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+    }
+
+    /* Results Table */
+    .results-section {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+
+    .results-header {
+      background: #34495e;
+      color: white;
+      padding: 15px 20px;
+      font-weight: 600;
+      display: grid;
+      grid-template-columns: 2fr 1fr 2fr 2fr 1fr;
+      gap: 15px;
+    }
+
+    .results-body {
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    .result-row {
+      border-bottom: 1px solid #e0e0e0;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 2fr 1fr 2fr 2fr 1fr;
+      gap: 15px;
+      align-items: start;
+      transition: background 0.2s;
+    }
+
+    .result-row:hover {
+      background: #f8f9fa;
+    }
+
+    .guideline-info h4 {
+      font-size: 1rem;
+      margin-bottom: 5px;
+      color: #2c3e50;
+    }
+
+    .wcag-code {
+      display: inline-block;
+      background: #ecf0f1;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      color: #555;
+      margin-top: 5px;
+    }
+
+    .priority {
+      font-size: 0.85rem;
+      color: #7f8c8d;
+      margin-top: 5px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      width: fit-content;
+    }
+
+    .status-badge.failed {
+      background: #fef5f5;
+      color: #e74c3c;
+    }
+
+    .status-badge.passed {
+      background: #f0f9f4;
+      color: #27ae60;
+    }
+
+    .issues-container {
+      background: #f0f9f4;
+      padding: 10px 12px;
+      border-radius: 6px;
+      border-left: 3px solid #27ae60;
+    }
+
+    .issues-container.has-issues {
+      background: #fef5f5;
+      border-left-color: #e74c3c;
+    }
+
+    .no-issues {
+      color: #27ae60;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .issues-list {
+      color: #555;
+      font-size: 0.9rem;
+    }
+
+    .fix-container {
+      background: #e3f2fd;
+      padding: 10px 12px;
+      border-radius: 6px;
+      border-left: 3px solid #2196f3;
+    }
+
+    .fix-container.no-fix {
+      background: #f0f9f4;
+      border-left-color: #27ae60;
+    }
+
+    .guideline-link {
+      text-align: center;
+    }
+
+    .guideline-link a {
+      color: #3498db;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .guideline-link a:hover {
+      text-decoration: underline;
+    }
+
+    /* Footer */
+    footer {
+      background: #2d5f8d;
+      color: white;
+      text-align: center;
+      padding: 20px;
+      margin-top: 40px;
+      font-size: 0.9rem;
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+
+    @media (max-width: 1024px) {
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .result-row, .results-header {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Accessibility Analyser</h1>
+    <button class="download-btn" id="downloadPdfBtn">
+      ⬇ Download PDF
+    </button>
+  </header>
+
+  <div class="summary-header">
+    <h2>Targeted URL: <span id="targetUrl">URL not available</span></h2>
+    <p style="margin-top: 8px; color: #666;">Total <span id="totalViolations" style="font-weight: 600; color: #e74c3c;">0</span> violations found</p>
+  </div>
+
+  <div class="summary-cards">
+    <div class="summary-card passed">
+      <h3 id="passedCount">0</h3>
+      <p>Passed</p>
+    </div>
+
+    <div class="summary-card failed">
+      <h3 id="failedCount">0</h3>
+      <p>Failed</p>
+    </div>
+
+    <div class="summary-card total">
+      <h3 id="totalCount">0</h3>
+      <p>Total Checks</p>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="content-grid">
+      <div>
+        <div class="filters">
+          <div class="filter-group">
+            <label>Filter by Impact</label>
+            <select id="impactFilter">
+              <option value="all">All</option>
+              <option value="passed">Passed</option>
+              <option value="failed">Failed</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label>Filter by Standards/Guidelines</label>
+            <select id="standardsFilter">
+              <option value="all">All</option>
+              <option value="wcag2a">WCAG 2.0 Level A</option>
+              <option value="wcag2aa">WCAG 2.0 Level AA</option>
+              <option value="wcag21a">WCAG 2.1 Level A</option>
+              <option value="wcag21aa">WCAG 2.1 Level AA</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <h3>Status Distribution</h3>
+        <div style="margin-bottom: 15px;">
+        </div>
+<canvas id="statusChart" width="300" height="300" style="max-width:300px; max-height:300px;"></canvas>
+
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-color" style="background: #27ae60;"></div>
+            <span>Passed</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background: #e74c3c;"></div>
+            <span>Failed</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="results-section">
+      <div class="results-header">
+        <div>Guideline</div>
+        <div>Status</div>
+        <div>Issues Found</div>
+        <div>How to Fix</div>
+        <div>Link to Guideline</div>
+      </div>
+      <div class="results-body" id="resultsBody">
+        <div class="no-results">
+          ⚠️ No analysis data found. Please run the analyzer again.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Generated by Accessibility Analyzer Pro • WCAG 2.1 Standards<br>
+    © 2025 Copyright. All Rights Reserved.
+  </footer>
+
+  <script src="utils/jspdf.umd.min.js"></script>
+<script src="utils/jspdf.plugin.autotable.min.js"></script>
+  <script src="expand.js"></script>
+</body>
+</html>
